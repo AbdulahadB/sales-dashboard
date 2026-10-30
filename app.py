@@ -223,7 +223,7 @@ with tab3:
     st.plotly_chart(fig, width="stretch")
 
 
-# ---------- Вкладка 4: сами данные ----------
+# Вкладка 4: сами данные 
 
 with tab4:
     st.subheader("Данные после очистки")
