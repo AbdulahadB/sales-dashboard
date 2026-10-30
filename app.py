@@ -118,8 +118,8 @@ col3.metric("Маржа", f"{margin:.1f}%")
 col4.metric("Продано единиц", f"{units:,.0f}".replace(",", " "))
 
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs(
-    ["Компании", "Динамика по месяцам", "Продукты и сегменты", "Проверка данных", "Таблица"]
+tab1, tab2, tab3, tab4 = st.tabs(
+    ["Компании", "Динамика по месяцам", "Продукты и сегменты", "Таблица"]
 )
 
 
@@ -223,69 +223,9 @@ with tab3:
     st.plotly_chart(fig, width="stretch")
 
 
-# ---------- Вкладка 4: проверка данных (как при аудите) ----------
+# ---------- Вкладка 4: сами данные ----------
 
 with tab4:
-    st.subheader("Проверка расчётов в отчётах")
-    st.write("Пересчитываю показатели сами и сравниваю с тем, что пришло в отчёте. "
-             "Если разница больше 1 цента - считаю это ошибкой.")
-
-    check = data.copy()
-    check["Ошибка в выручке до скидок"] = (
-        (check["Продано единиц"] * check["Цена продажи"] - check["Выручка до скидок"]).abs() > 0.01
-    )
-    check["Ошибка в выручке"] = (
-        (check["Выручка до скидок"] - check["Скидки"] - check["Выручка"]).abs() > 0.01
-    )
-    check["Ошибка в прибыли"] = (
-        (check["Выручка"] - check["Себестоимость"] - check["Прибыль"]).abs() > 0.01
-    )
-
-    results = pd.DataFrame({
-        "Проверка": [
-            "Единицы × цена = выручка до скидок",
-            "Выручка до скидок − скидки = выручка",
-            "Выручка − себестоимость = прибыль",
-            "Пропуски в данных",
-            "Дубликаты строк",
-        ],
-        "Найдено ошибок": [
-            check["Ошибка в выручке до скидок"].sum(),
-            check["Ошибка в выручке"].sum(),
-            check["Ошибка в прибыли"].sum(),
-            data.isna().sum().sum(),
-            data.duplicated().sum(),
-        ],
-    })
-    st.dataframe(results, width="stretch", hide_index=True)
-
-    if results["Найдено ошибок"].sum() == 0:
-        st.success("Ошибок не найдено, цифры в отчётах сходятся.")
-    else:
-        st.error("Есть расхождения, нужно проверить отчёты.")
-
-    st.subheader("Убыточные продажи")
-    losses = data[data["Прибыль"] < 0]
-    st.write(f"Сделок с отрицательной прибылью: **{len(losses)}**, "
-             f"общий убыток: **${abs(losses['Прибыль'].sum()):,.0f}**")
-
-    losses_by_company = losses.groupby("Компания")["Прибыль"].sum().reset_index()
-    fig = px.bar(losses_by_company, x="Компания", y="Прибыль",
-                 color_discrete_sequence=["#e34948"])
-    fig.update_layout(xaxis_title="", yaxis_title="Убыток, $")
-    st.plotly_chart(fig, width="stretch")
-
-    st.dataframe(
-        losses[["Дата", "Компания", "Сегмент", "Продукт", "Уровень скидки", "Выручка", "Прибыль"]]
-        .sort_values("Прибыль"),
-        width="stretch",
-        hide_index=True,
-    )
-
-
-# ---------- Вкладка 5: сами данные ----------
-
-with tab5:
     st.subheader("Данные после очистки")
     st.write(f"Строк: {len(data)}, колонок: {data.shape[1]}")
     st.dataframe(data, width="stretch", hide_index=True)
